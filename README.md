@@ -1,2 +1,2 @@
 # Machine_learning
-My learing process of machine learning
+My learning process of machine learning
