@@ -26,7 +26,7 @@ def cost_function(a, b, x, y):
 
 def optimize(a, b, x, y):
     n = 14
-    alpha = 1e-2                             """initialize the learning rate"""
+    alpha = 1e-2                             
     y_hat = model(a, b, x)
     da = (1.0/n)*((y_hat-y)*x).sum()
     db = (1.0/n)*((y_hat-y).sum())
