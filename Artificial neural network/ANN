@@ -1,0 +1,74 @@
+import tensorflow as tf
+import numpy as np
+
+x = np.loadtxt("./data/iris_x.dat", dtype=float, ndmin=2)
+y = np.loadtxt("./data/iris_y.dat", dtype=float, ndmin=2).astype(int)
+
+
+class Ann(object):
+    def __init__(self, x, y, n_hidden=5):
+        self._x = np.array(x)
+        self._y = np.array(y)
+        self.nclass = self._y.max() + 1
+        self.one_hot()
+
+        self.z_score_normalize()
+        self.x = np.hstack((np.ones((self.x.shape[0], 1)), self.x))
+        self.n_hidden = n_hidden
+
+    def one_hot(self):
+        self.y = np.zeros((self._y.shape[0], self.nclass))
+        self.y[np.arange(self._y.shape[0]), self._y.flatten()] = 1
+
+    def z_score_normalize(self):
+        x_mean, x_std = np.mean(self._x, axis=0), np.std(self._x, axis=0)
+        self.x = (self._x - x_mean)/x_std
+
+    def print(self):
+        print(np.arange(self._y.shape[0]))
+
+    def init_para(self):
+        self.v = np.random.rand(self.x.shape[1], self.n_hidden)
+        self.w = np.random.rand(self.n_hidden, self.y.shape[1])
+        self.theta = np.random.rand(self.y.shape[1],)
+
+    def sigmoid(self, s):
+        return 1 / (1 + np.exp(-s))
+
+    def forward(self, x):
+        b = self.sigmoid(np.matmul(x, self.v))
+        pred = self.sigmoid(np.matmul(b, self.w) + self.theta)
+        return b, pred
+
+    def cal_acc(self, x):
+        b, pred = self.forward(x)
+        x_pred = np.argmax(pred, axis=1)
+
+        acc = np.sum(x_pred.flatten() == self._y.flatten()) / x.shape[0]
+        return acc
+
+    def train(self, learning_rate=0.05, iter_times=100):
+        self.init_para()
+        for i in range(iter_times):
+            for j in range(self.x.shape[0]):
+                x, y = self.x[j], self.y[j]
+                b, pred = self.forward(x)
+                error_output = (pred - y) * pred * (1 - pred)
+
+                self.w -= learning_rate * np.matmul(b.reshape(-1, 1), error_output.reshape(1, -1))
+                self.theta -= learning_rate*error_output
+
+                error_hidden = np.matmul(error_output, self.w.T) * b * (1 - b)
+                self.v -= learning_rate * np.matmul(x.reshape(-1, 1), error_hidden.reshape(1, -1))
+
+            b, pred = self.forward(self.x)
+            # calculate loss
+
+            loss = np.mean(np.square(pred - self.y))
+            acc = self.cal_acc(self.x)
+            print("* iter {}, loss {:.8f}, train acc {:.4f}".format(i + 1, loss, acc))
+
+
+temp = Ann(x, y)
+
+temp.train()
